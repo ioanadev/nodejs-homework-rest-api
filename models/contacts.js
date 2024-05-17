@@ -12,6 +12,7 @@ const contactsPath = `${__dirname}\\contacts.json`;
 import contacts from "./contacts.json" assert { type: "json" };
 
 export const listContacts = async () => {
+
   return contacts;
 }
 

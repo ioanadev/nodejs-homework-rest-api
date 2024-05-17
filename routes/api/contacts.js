@@ -2,7 +2,7 @@ import express from'express';
 import { addContact, getContactById, listContacts, removeContact, updateContact } from '../../models/contacts.js';
 import  Joi from 'joi';
 
-const router = express.Router()
+const router = express.Router();
 
 const schema = Joi.object({
   name: Joi.string()
@@ -12,12 +12,12 @@ const schema = Joi.object({
   email: Joi.string()
      .email()
      .required(),
-  phone: Joi.number()
-  .required()
+  phone: Joi.string()
+  .required(),
 })
 
 
-//GET /api/contacts
+// GET /api/contacts
 router.get('/', async (req, res, next) => {
 
   try{
@@ -33,7 +33,7 @@ router.get('/', async (req, res, next) => {
   
 })
 
-//GET /api/contacts/:id
+// GET /api/contacts/:id
 router.get('/:contactId', async (req, res, next) => { 
   try{
     const contact = await getContactById(req.params.contactId);
@@ -50,11 +50,11 @@ router.get('/:contactId', async (req, res, next) => {
   
 })
 
-//POST /api/contacts
+// POST /api/contacts
 router.post('/', async (req, res, next) => {
   try{
     const {error, value:contact} = schema.validate(req.body) ;
-    const contacts = await listContacts();
+    // const contacts = await listContacts();
 
     if(error){
       return res.status(400).json({ error: error.details[0].message });
@@ -73,7 +73,7 @@ router.post('/', async (req, res, next) => {
 
 })
 
-//DELETE /api/contacts/:id
+// DELETE /api/contacts/:id
 router.delete('/:contactId', async (req, res, next) => {
 
   try{
@@ -90,7 +90,7 @@ router.delete('/:contactId', async (req, res, next) => {
 
 })
 
-//PUT /api/contacts/:id
+// PUT /api/contacts/:id
 router.put('/:contactId', async (req, res, next) => {
   try{
     const {error, value:contact} = schema.validate(req.body);

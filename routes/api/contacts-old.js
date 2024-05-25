@@ -1,23 +1,38 @@
 import express from'express'; 
-import { addContact, getContactById, listContacts, removeContact, updateContact, updateStatusContact } from "../../controller/contactsControler.js";
+import { addContact, getContactById, listContacts, removeContact, updateContact } from '../../models/contacts-old.js';
+import  Joi from 'joi';
 
 const router = express.Router();
+
+const schema = Joi.object({
+  name: Joi.string()
+     .min(3)
+     .max(30)
+     .required(),
+  email: Joi.string()
+     .email()
+     .required(),
+  phone: Joi.string()
+  .required(),
+})
 
 
 // GET /api/contacts
 router.get('/', async (req, res, next) => {
 
-    try{
-      const data = await listContacts();
-      res.statusCode = 200;
-      res.json({ message: 'The contacts have been retrieved successfully', data })
-    }
-    catch(err){
-     res.statusCode = 500;
-     res.json({ message: `${err}` })
-    }
+  try{
+    const contacts = await listContacts();
+    res.statusCode = 200;
+    res.json({ message: 'The contacts have been retrieved successfully', data: contacts })
+  }
+  catch(err){
+   res.statusCode = 500;
+   res.json({ message: `${err}` })
+  }
+ 
+  
 })
-   
+
 // GET /api/contacts/:id
 router.get('/:contactId', async (req, res, next) => { 
   try{
@@ -30,7 +45,7 @@ router.get('/:contactId', async (req, res, next) => {
     return res.json({ message: 'The contact was returned successfully', contact});
   }
   catch(err){
-    return res.status(500).json({ message: `${err}`});
+   return res.json({ message: `${err}`});
   }
   
 })
@@ -38,8 +53,13 @@ router.get('/:contactId', async (req, res, next) => {
 // POST /api/contacts
 router.post('/', async (req, res, next) => {
   try{
-    
-    const contact = req.body;
+    const {error, value:contact} = schema.validate(req.body) ;
+    // const contacts = await listContacts();
+
+    if(error){
+      return res.status(400).json({ error: error.details[0].message });
+    }
+
     if(contact.name && contact.email && contact.phone){
       await addContact(contact)
       return res.status(201).json({ message: 'The contact has been added', contact })
@@ -73,17 +93,20 @@ router.delete('/:contactId', async (req, res, next) => {
 // PUT /api/contacts/:id
 router.put('/:contactId', async (req, res, next) => {
   try{
-    // const {error, value:contact} = schema.validate(req.body);
-  
-    const id = req.params.contactId;
-    const body = req.body;
+    const {error, value:contact} = schema.validate(req.body);
+    console.log(req.body);
+    console.log(req.params.contactId);
 
-    if(!body.name && !body.email && !body.phone){
+    if(error){
+      return res.status(400).json({ error: error.details[0].message });
+    }
+
+    if(!contact.name && !contact.email && !contact.phone){
      return res.status(400).json({ message: 'Missing fields'  })
     }
-    const changedContact = await updateContact(id, body);
-    if(changedContact){
-     return res.status(200).json({ message: 'Contract updated', changedContact })
+    const modificationContact = await updateContact(req.params.contactId, req.body);
+    if(modificationContact){
+     return res.status(200).json({ message: 'Contract updated', modificationContact })
     }else {
     return res.status(404).json({ message: 'Contract not found'})
     }
@@ -91,35 +114,6 @@ router.put('/:contactId', async (req, res, next) => {
   catch(err){
     return res.status(500).json({ message: `${err}`});
   }
-})
-
-// PATCH /api/contacts/:contactId/favorite
-router.patch('/:contactId/favorite', async (req, res, next)=>{
-  try{
-    const id = req.params.contactId;
-    const body = req.body;
-    const favorite = body.favorite
-
-    console.log("id:", id);
-    console.log("body favorite:", body.favorite);
-    console.log("not body favorite:", !body.favorite);
-    
-
-
-    if(favorite === "undefine"){
-      return res.status(400).json({ message: 'Missing field favorite'  })
-     }
-     const changedStatus = await updateStatusContact(id, {favorite});
-     if(changedStatus){
-      return res.status(200).json({ message: 'Status updated', changedStatus })
-     }else {
-     return res.status(404).json({ message: 'Not found'})
-     }
-  } 
-  catch(err){
-    return res.status(500).json({ message: `${err}`});
-  }
-
 })
 
 export default router;

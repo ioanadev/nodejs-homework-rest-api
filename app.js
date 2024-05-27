@@ -4,9 +4,11 @@ import cors from 'cors'
 
 
 import contactsRouter from './routes/api/contacts.js'
+import { connectToDb } from './utils/connectDb.js';
 
 const app = express();
 
+connectToDb();
 
 const formatsLogger = app.get('env') === 'development' ? 'dev' : 'short'
 

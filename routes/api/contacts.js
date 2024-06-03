@@ -26,7 +26,7 @@ router.get('/',
   async (req, res, next) => {
 
     try{
-      // console.log(JSON.stringify(req.headers))
+     
       const header = req.get('authorization');
       if(!header) {
         throw(new Error("Not authorized"))
@@ -46,8 +46,14 @@ router.get('/',
 )
    
 // GET /api/contacts/:id
-router.get('/:contactId', async (req, res, next) => { 
+router.get('/:contactId',validateAuth, async (req, res, next) => { 
   try{
+    const header = req.get('authorization');
+    if(!header) {
+      throw(new Error("Not authorized"))
+    }
+    const token = header.split("")[1];
+    ValidateJWT(token)
     const contact = await getContactById(req.params.contactId);
     if(!contact){
       res.statusCode = 404;
@@ -63,10 +69,16 @@ router.get('/:contactId', async (req, res, next) => {
 })
 
 // POST /api/contacts
-router.post('/', async (req, res, next) => {
+router.post('/', validateAuth, async (req, res, next) => {
   try{
-    const {error, value:contact} = schema.validate(req.body) ;
+      const header = req.get('authorization');
+    if(!header) {
+      throw(new Error("Not authorized"))
+    }
+    const token = header.split("")[1];
+    ValidateJWT(token)
 
+    const {error, value:contact} = schema.validate(req.body) ;
     if(error){
       return res.status(400).json({ error: error.details[0].message });
     }
@@ -85,9 +97,16 @@ router.post('/', async (req, res, next) => {
 })
 
 // DELETE /api/contacts/:id
-router.delete('/:contactId', async (req, res, next) => {
+router.delete('/:contactId', validateAuth, async (req, res, next) => {
 
   try{
+    const header = req.get('authorization');
+    if(!header) {
+      throw(new Error("Not authorized"))
+    }
+    const token = header.split("")[1];
+    ValidateJWT(token) 
+
    const contacts =  await removeContact(req.params.contactId)
    if(contacts){
     res.status(200).json({ message: 'Contact deleted', contacts })
@@ -102,8 +121,15 @@ router.delete('/:contactId', async (req, res, next) => {
 })
 
 // PUT /api/contacts/:id
-router.put('/:contactId', async (req, res, next) => {
+router.put('/:contactId', validateAuth, async (req, res, next) => {
   try{
+    const header = req.get('authorization');
+    if(!header) {
+      throw(new Error("Not authorized"))
+    }
+    const token = header.split("")[1];
+    ValidateJWT(token)
+
     const {error, value:contact} = schema.validate(req.body);
   
     // const id = req.params.contactId;
@@ -129,8 +155,15 @@ router.put('/:contactId', async (req, res, next) => {
 })
 
 // PATCH /api/contacts/:contactId/favorite
-router.patch('/:contactId/favorite', async (req, res, next)=>{
+router.patch('/:contactId/favorite', validateAuth, async (req, res, next)=>{
   try{
+    const header = req.get('authorization');
+    if(!header) {
+      throw(new Error("Not authorized"))
+    }
+    const token = header.split("")[1];
+    ValidateJWT(token)
+
     const id = req.params.contactId;
     const body = req.body;
     const favorite = body.favorite

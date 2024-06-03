@@ -1,5 +1,6 @@
 import express from'express'; 
 import { addContact, getContactById, listContacts, removeContact, updateContact, updateStatusContact } from "../../controller/contactsControler.js";
+
 import  Joi from 'joi';
 // import passport from "passport";
 import "../../passport.js";
@@ -42,8 +43,9 @@ router.get('/',
      res.statusCode = 500;
      res.json({ message: `${err}` })
     }
- }
-)
+
+})
+
    
 // GET /api/contacts/:id
 router.get('/:contactId',validateAuth, async (req, res, next) => { 
@@ -71,6 +73,7 @@ router.get('/:contactId',validateAuth, async (req, res, next) => {
 // POST /api/contacts
 router.post('/', validateAuth, async (req, res, next) => {
   try{
+
       const header = req.get('authorization');
     if(!header) {
       throw(new Error("Not authorized"))
@@ -83,6 +86,8 @@ router.post('/', validateAuth, async (req, res, next) => {
       return res.status(400).json({ error: error.details[0].message });
     }
  
+    const contact = req.body;
+
     if(contact.name && contact.email && contact.phone){
       await addContact(contact)
       return res.status(201).json({ message: 'The contact has been added', contact })
@@ -123,6 +128,7 @@ router.delete('/:contactId', validateAuth, async (req, res, next) => {
 // PUT /api/contacts/:id
 router.put('/:contactId', validateAuth, async (req, res, next) => {
   try{
+
     const header = req.get('authorization');
     if(!header) {
       throw(new Error("Not authorized"))
@@ -132,17 +138,20 @@ router.put('/:contactId', validateAuth, async (req, res, next) => {
 
     const {error, value:contact} = schema.validate(req.body);
   
-    // const id = req.params.contactId;
-    // const body = req.body;
-
     if(error){
       return res.status(400).json({ error: error.details[0].message });
     }
 
-    if(!contact.name && !contact.email && !contact.phone){
+    const id = req.params.contactId;
+    const body = req.body;
+
+
+    if(!body.name && !body.email && !body.phone){
      return res.status(400).json({ message: 'Missing fields'  })
     }
+
     const changedContact = await updateContact(req.params.contactId, req.body);
+
     if(changedContact){
      return res.status(200).json({ message: 'Contract updated', changedContact })
     }else {
@@ -155,6 +164,7 @@ router.put('/:contactId', validateAuth, async (req, res, next) => {
 })
 
 // PATCH /api/contacts/:contactId/favorite
+
 router.patch('/:contactId/favorite', validateAuth, async (req, res, next)=>{
   try{
     const header = req.get('authorization');
@@ -163,6 +173,7 @@ router.patch('/:contactId/favorite', validateAuth, async (req, res, next)=>{
     }
     const token = header.split("")[1];
     ValidateJWT(token)
+
 
     const id = req.params.contactId;
     const body = req.body;
@@ -179,6 +190,7 @@ router.patch('/:contactId/favorite', validateAuth, async (req, res, next)=>{
      }
      const changedStatus = await updateStatusContact(id, {favorite});
      if(changedStatus){
+
       return res
       .status(200)
       .json({ message: 'Status updated', changedStatus })
@@ -186,6 +198,7 @@ router.patch('/:contactId/favorite', validateAuth, async (req, res, next)=>{
      return res
      .status(404)
      .json({ message: 'Not found'})
+
      }
   } 
   catch(err){

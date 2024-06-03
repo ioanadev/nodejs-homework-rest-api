@@ -6,16 +6,14 @@ import cors from 'cors';
 
 import contactsRouter from './routes/api/contacts.js'
 import { connectToDb } from './utils/connectDb.js';
+
 import authRouter from './routes/api/auth.js'
 
 
 const app = express();
 
 connectToDb();
-// const token = await loginFunction()
-// const decode = jwt.decode(token);
 
-// console.log(decode);
 
 const formatsLogger = app.get('env') === 'development' ? 'dev' : 'short'
 

@@ -2,7 +2,9 @@
 // import { required } from 'joi';
 import mongoose from 'mongoose';
 
-const {Schema, model} = mongoose;
+
+const {Schema} = mongoose;
+
 
 
 const schema = new mongoose.Schema({ 
@@ -20,6 +22,12 @@ const schema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+
+  owner: {
+    type: Schema.Types.ObjectId,
+    ref: 'user',
+  }
+
  });
 
 

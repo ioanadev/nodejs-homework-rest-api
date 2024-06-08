@@ -2,7 +2,8 @@ import User from "../models/auth.js";
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import "dotenv/config";
-
+import gravatar from 'gravatar';
+import Jimp from "jimp";
 import passport from 'passport';
 
 const PRIVATE_KEY = process.env.PRIVATE_KEY
@@ -10,12 +11,14 @@ const PRIVATE_KEY = process.env.PRIVATE_KEY
 export const singupFunction = async (user) => {
 
  const saltRounds = 10;
- const encryptedPass = await bcrypt.hash(user.password, saltRounds)
+ const encryptedPass = await bcrypt.hash(user.password, saltRounds);
+ const userAvatar= gravatar.url(user.email);
 
   const newUser = ({
    password: encryptedPass,
    email: user.email,
-   subscription: user.subscription ?? "starter"
+   subscription: user.subscription ?? "starter",
+   avatarURL: userAvatar
   });
 
  const addNewUser = User.create(newUser)
@@ -76,4 +79,15 @@ export function validateAuth(req, res, next) {
   (req, res, next);
 }
 
-
+export const jimpFunction = async (path) =>{
+  Jimp.read(path, (err, avatar) => {
+    if (err) throw err;
+    avatar
+      .resize(250, 250) 
+      .quality(60)
+      .write(path); 
+      // console.log("Avatar din jumpFunction:", avatar)
+    // return avatar;
+  });
+  
+}

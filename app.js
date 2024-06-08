@@ -17,6 +17,8 @@ connectToDb();
 
 const formatsLogger = app.get('env') === 'development' ? 'dev' : 'short'
 
+app.use(express.static('public'))
+// verificarea existentei folderului public
 app.use(logger(formatsLogger))
 app.use(cors())
 app.use(express.json())

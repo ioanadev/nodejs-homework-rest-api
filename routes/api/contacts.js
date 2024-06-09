@@ -136,14 +136,14 @@ router.put('/:contactId', validateAuth, async (req, res, next) => {
     const token = header.split("")[1];
     ValidateJWT(token)
 
-    const {error, value:contact} = schema.validate(req.body);
+    const {error, value:body} = schema.validate(req.body);
   
     if(error){
       return res.status(400).json({ error: error.details[0].message });
     }
 
-    const id = req.params.contactId;
-    const body = req.body;
+    // const id = req.params.contactId;
+    // const body = req.body;
 
 
     if(!body.name && !body.email && !body.phone){

@@ -3,7 +3,7 @@ import {ValidateJWT, emailVerification, jimpFunction, loginFunction, passwordVer
 import "dotenv/config";
 import  Joi from 'joi';
 import User from '../../models/auth.js';
-import Jimp from "jimp";
+// import Jimp from "jimp";
 import fs from 'node:fs/promises';
 import path from 'path';
 
@@ -182,7 +182,7 @@ router.patch('/avatar', validateAuth, upload.single('avatar'), async (req, res, 
     const payload =  ValidateJWT(token);
     const id = payload.id;
     const user = await User.findById(id);
-    const avatarImg = req.file;
+    // const avatarImg = req.file;
     const filePath = req.file.path;
     const targetPath = path.join('public/avatars', `${req.file.filename}`)
 

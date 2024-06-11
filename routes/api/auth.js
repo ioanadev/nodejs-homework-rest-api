@@ -1,12 +1,27 @@
 import express from'express'; 
-import {ValidateJWT, emailVerification, loginFunction, passwordVerification, singupFunction, validateAuth } from '../../controller/authControler.js';
+import {ValidateJWT, emailVerification, jimpFunction, loginFunction, passwordVerification, singupFunction, validateAuth } from '../../controller/authControler.js';
 import "dotenv/config";
 import  Joi from 'joi';
 import User from '../../models/auth.js';
+// import Jimp from "jimp";
+import fs from 'node:fs/promises';
+import path from 'path';
+
+import multer from 'multer';
 
 
 
 const router = express.Router();
+
+const storage = multer.diskStorage({
+  destination: "tmp",
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
+    cb(null, file.fieldname + '-' + uniqueSuffix + ".png")
+  }
+})
+
+const upload = multer({ storage })
 
 const UserSchema = Joi.object({
   email: Joi.string()
@@ -150,5 +165,42 @@ router.get('/current', validateAuth, async (req, res, next) => {
     res.status(500).json({ message: `${err}`})
   }
   })
+
+// PATCH /users/avatar
+router.patch('/avatar', validateAuth, upload.single('avatar'), async (req, res, next) => {
+
+  try{
+    const header = req.get('authorization');
+   
+    if(!header) {
+      return res
+      .status(401)
+      .json({ message: 'Not authorized'});
+    }
+
+    const token = header.split(" ")[1];
+    const payload =  ValidateJWT(token);
+    const id = payload.id;
+    const user = await User.findById(id);
+    // const avatarImg = req.file;
+    const filePath = req.file.path;
+    const targetPath = path.join('public/avatars', `${req.file.filename}`)
+
+   await jimpFunction(filePath);
+   await fs.rename(filePath, targetPath, (err)=>{
+      if (err) throw err;
+    })  
+    
+    user.avatarURL = req.file.filename;
+    await user.save();
+     const userAvatar = user.avatarURL;
+    return res.status(200).json({ message: 'Avatar uploaded successfully', userAvatar });
+  }
+
+  catch(err){
+    return res.status(500).json({ message: `${err}`});
+  }
+})
+
 
 export default router

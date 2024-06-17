@@ -5,6 +5,10 @@ import "dotenv/config";
 import gravatar from 'gravatar';
 import Jimp from "jimp";
 import passport from 'passport';
+import { v4 as uuidv4 } from "uuid";
+import { sendEmailVerification } from "../utils/sendEmail.js";
+
+
 
 const PRIVATE_KEY = process.env.PRIVATE_KEY
 
@@ -13,20 +17,27 @@ export const singupFunction = async (user) => {
  const saltRounds = 10;
  const encryptedPass = await bcrypt.hash(user.password, saltRounds);
  const userAvatar= gravatar.url(user.email);
+ const userToken = uuidv4();
 
   const newUser = ({
    password: encryptedPass,
    email: user.email,
    subscription: user.subscription ?? "starter",
-   avatarURL: userAvatar
+   avatarURL: userAvatar,
+   verificationToken: userToken,
+   verify:false,
   });
 
- const addNewUser = User.create(newUser)
+  console.log('Generated verificationToken:', userToken); 
+  sendEmailVerification(user.email, userToken);
+ const addNewUser = await User.create(newUser);
  return addNewUser;   
 }
 
-export const emailVerification = async (email)=>{
- const verifEmail =  await User.findOne({email})
+export const emailVerification = async (email, token)=>{
+  token = token || uuidv4();
+ const verifEmail =  await User.findOneAndUpdate({email}, {verificationToken: token});
+//  sendEmailVerification(email, token);
  return verifEmail;
 }
 
@@ -91,3 +102,6 @@ export const jimpFunction = async (path) =>{
   });
   
 }
+
+
+ 

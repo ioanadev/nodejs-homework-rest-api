@@ -1,14 +1,22 @@
 import express from'express'; 
-import {ValidateJWT, emailVerification, jimpFunction, loginFunction, passwordVerification, singupFunction, validateAuth } from '../../controller/authControler.js';
+import {
+  ValidateJWT, 
+  emailVerification, 
+  jimpFunction, 
+  loginFunction, 
+  passwordVerification, 
+  singupFunction, 
+  validateAuth
+} from '../../controller/authControler.js';
 import "dotenv/config";
 import  Joi from 'joi';
 import User from '../../models/auth.js';
 // import Jimp from "jimp";
 import fs from 'node:fs/promises';
 import path from 'path';
-
+import { v4 as uuidv4 } from "uuid";
 import multer from 'multer';
-
+import { sendEmailVerification } from '../../utils/sendEmail.js';
 
 
 const router = express.Router();
@@ -37,12 +45,13 @@ router.post('/signup', async (req, res, next) => {
 
   const {error, value:user} = UserSchema.validate(req.body) ;
 
-
   if(error){
-    return res.status(400).json({ error: error.details[0].message });
+    return res
+    .status(400)
+    .json({ error: error.details[0].message });
   }
 
-  const existsEmail  = await emailVerification(user.email)
+  const existsEmail  = await User.findOne({email: user.email})
   if(existsEmail){
    return res 
          .status(409)
@@ -67,7 +76,9 @@ router.post('/signup', async (req, res, next) => {
     }
  }
   catch(err){
-    return res.status(500).json({ message: `${err}`});
+    return res
+    .status(500)
+    .json({ message: `${err}`});
   }
   
 })
@@ -119,7 +130,9 @@ try{
   const header = req.get('authorization');
  
   if(!header) {
-    return res.status(401).json({ message: 'Not authorized'});
+    return res
+    .status(401)
+    .json({ message: 'Not authorized'});
   }
   const token = header.split(" ")[1];
 
@@ -130,10 +143,13 @@ try{
   user.token = null;
   await user.save();
   return res
-  .status(204).send()
+  .status(204)
+  .send()
 }
 catch(err){
-  res.status(500).json({ message: `${err}`})
+  res
+  .status(500)
+  .json({ message: `${err}`})
 }
 })
 
@@ -144,7 +160,9 @@ router.get('/current', validateAuth, async (req, res, next) => {
     const header = req.get('authorization');
    
     if(!header) {
-      return res.status(401).json({ message: 'Not authorized'});
+      return res
+      .status(401)
+      .json({ message: 'Not authorized'});
     }
     const token = header.split(" ")[1];
   
@@ -162,7 +180,9 @@ router.get('/current', validateAuth, async (req, res, next) => {
     })
   }
   catch(err){
-    res.status(500).json({ message: `${err}`})
+    res
+    .status(500)
+    .json({ message: `${err}`})
   }
   })
 
@@ -182,7 +202,6 @@ router.patch('/avatar', validateAuth, upload.single('avatar'), async (req, res, 
     const payload =  ValidateJWT(token);
     const id = payload.id;
     const user = await User.findById(id);
-    // const avatarImg = req.file;
     const filePath = req.file.path;
     const targetPath = path.join('public/avatars', `${req.file.filename}`)
 
@@ -194,13 +213,82 @@ router.patch('/avatar', validateAuth, upload.single('avatar'), async (req, res, 
     user.avatarURL = req.file.filename;
     await user.save();
      const userAvatar = user.avatarURL;
-    return res.status(200).json({ message: 'Avatar uploaded successfully', userAvatar });
+    return res
+    .status(200)
+    .json({ message: 'Avatar uploaded successfully', userAvatar });
   }
 
   catch(err){
-    return res.status(500).json({ message: `${err}`});
+    return res
+    .status(500)
+    .json({ message: `${err}`});
   }
 })
 
+// GET /users/verify/:verificationToken
+router.get('/verify/:verificationToken', async (req, res) => {
+  const {verificationToken} = req.params;
+
+
+  try{ 
+    const user = await User.findOne({verificationToken});
+   
+   if(user){
+    user.verificationToken = verificationToken;
+    user.verify = true;
+    await user.save();
+
+    return res
+    .status(200)
+    .json({ message: 'Verification successful'});
+   } else{
+    return res
+    .status(404)
+    .json({ message: 'User not found'});
+   }
+  }
+  catch(err){
+    res
+    .status(500)
+    .json({ message: `${err}`})
+  }
+})
+
+// GET /users/verify
+router.post('/verify', async (req, res) => {
+  const email = req.body?.email;
+  const token = uuidv4();
+
+ 
+  if(!email){
+    return res
+    .status(400)
+    .json({ message: 'missing required field email'});
+  }
+  
+  try{ 
+    const user = await User.findOne({email});
+    const isValid = user.verify;
+   if(isValid === false){
+    sendEmailVerification(email, token);
+    user.verificationToken = token;
+    await user.save();
+
+    return res
+    .status(200)
+    .json({ message: 'Verification email sent'});
+
+   } else{
+    return res
+    .status(400)
+    .json({ message: 'Verification has already been passed'});
+   }
+  } 
+  catch(err){
+    res
+    .status(500)
+    .json({ message: `${err}`})
+  }
+})
 
 export default router

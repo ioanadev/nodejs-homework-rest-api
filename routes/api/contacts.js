@@ -22,9 +22,7 @@ const schema = Joi.object({
 })
 
 // GET /api/contacts
-router.get('/', 
-  validateAuth, 
-  async (req, res, next) => {
+router.get('/', validateAuth, async (req, res, next) => {
 
     try{
      
